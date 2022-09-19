@@ -1,5 +1,5 @@
 import sqlite3
-from flask import Flask, json
+from flask import Flask, json, jsonify
 
 app = Flask(__name__)
 
@@ -16,16 +16,12 @@ def step_1(title):
     for item in get_data_by_sql(sql=f'''
            select title, country, release_year, genre, description
            from netflix
-           where title = '9'
+           where title = '{title}'
            order by release_year desc
            limit 1
            '''):
         result = dict(item)
-    return app.response_class(
-        json.dumps(result, ensure_ascii=False, indent=4),
-        mimetype="application/json",
-        status=200
-    )
+    return jsonify(result)
 
 
 @app.get("/movie/<int:year1>/to/<int:year2>/")
@@ -33,7 +29,7 @@ def step_2(year1, year2):
     result = {}
     sql=f'''
     select * from netflix
-    where release_year between {2019} and {2021}
+    where release_year between {year1} and {year2}
     limit 100
     '''
 
@@ -42,11 +38,7 @@ def step_2(year1, year2):
     for item in get_data_by_sql(sql):
         result.append(dict(item))
 
-    return app.response_class(
-        json.dumps(result[:1], ensure_ascii=False, indent=4),
-        mimetype="application/json",
-        status=200
-    )
+    return jsonify(result)
 
 @app.get("/rating/<rating>/")
 def step_3(rating):
@@ -65,11 +57,7 @@ def step_3(rating):
     for item in get_data_by_sql(sql):
         result.append(dict(item))
 
-    return app.response_class(
-        json.dumps(result, ensure_ascii=False, indent=4),
-        mimetype="application/json",
-        status=200
-    )
+    return jsonify(result)
 
 
 @app.get("/genre/<genre>/")
@@ -85,50 +73,8 @@ def step_4(genre):
     for item in get_data_by_sql(sql):
         result.append(dict(item))
 
-    return app.response_class(
-        json.dumps(result, ensure_ascii=False, indent=4),
-        mimetype="application/json",
-        status=200
-    )
-
-
-def step_5(name1='Rose McIver', name2='Ben Lamb'):
-    sql = f'''
-           select netflix.cast from netflix
-           where netflix.cast like '%{name1}%' and netflix.cast like '%{name2}%'
-    '''
-
-    names_dict = {}
-
-    for item in get_data_by_sql(sql):
-        result = dict(item)
-
-        names = set(result.get('cast').split(", ")) - set([name1, name2])
-
-        for name in names:
-            names_dict[name.strip()] = names_dict.get(name.strip(),0) + 1
-
-    print(names_dict)
-
-    for k, v in names_dict:
-        if v > 2:
-            print(k)
-
-def step_6(types='Movie', year=2020, genre='Horror'):
-    sql = f'''
-               select * from netflix
-               where type = '{types.title()}'
-               and release_year = '{year}'
-               and listed_in like '%{genre.title}%' 
-        '''
-
-    result = []
-
-    for item in get_data_by_sql(sql):
-        result.append(dict(item))
-
-    return json.dumps(result, ensure_ascii=False, indent=4)
+    return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=8080, debug=True)
+    app.run(host='localhost', port=8081, debug=True)
 
